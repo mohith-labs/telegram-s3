@@ -1,0 +1,24 @@
+services:
+  tgs3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"   # Next.js frontend
+      - "3001:3001"   # Admin API
+      - "4000:4000"   # S3 API endpoint
+    volumes:
+      - tgs3-data:/data
+    environment:
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=changeme
+      - JWT_SECRET=change-this-to-a-random-secret
+      - DATABASE_URL=file:/data/tgs3.db
+      - FRONTEND_URL=http://localhost:3000
+      - ADMIN_API_URL=http://localhost:3001
+      - ADMIN_API_PORT=3001
+      - S3_API_PORT=4000
+    restart: unless-stopped
+
+volumes:
+  tgs3-data:

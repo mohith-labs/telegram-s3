@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model TelegramSession {
+  id            String   @id @default("default")
+  sessionString String
+  phoneNumber   String?
+  apiId         Int
+  apiHash       String
+  connected     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AccessKey {
+  id              String   @id @default(cuid())
+  name            String
+  accessKeyId     String   @unique
+  secretAccessKey String
+  isActive        Boolean  @default(true)
+  permissions     String   @default("{}") // JSON: { "*": ["read","write","delete","list"] }
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Bucket {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  channelId         BigInt
+  channelAccessHash BigInt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  objects          S3Object[]
+  multipartUploads MultipartUpload[]
+}
+
+model S3Object {
+  id             String   @id @default(cuid())
+  key            String
+  bucketId       String
+  bucket         Bucket   @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+  size           BigInt
+  contentType    String   @default("application/octet-stream")
+  etag           String
+  metadata       String   @default("{}") // JSON user metadata (x-amz-meta-*)
+  isDeleteMarker Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  chunks ObjectChunk[]
+
+  @@unique([bucketId, key])
+  @@index([bucketId, key])
+}
+
+model ObjectChunk {
+  id         String   @id @default(cuid())
+  objectId   String
+  object     S3Object @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  chunkIndex Int
+  messageId  Int
+  fileSize   BigInt
+  createdAt  DateTime @default(now())
+
+  @@unique([objectId, chunkIndex])
+  @@index([objectId])
+}
+
+model MultipartUpload {
+  id          String   @id @default(cuid())
+  bucketId    String
+  bucket      Bucket   @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+  key         String
+  contentType String   @default("application/octet-stream")
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+
+  parts MultipartPart[]
+
+  @@index([bucketId, key])
+}
+
+model MultipartPart {
+  id         String          @id @default(cuid())
+  uploadId   String
+  upload     MultipartUpload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  partNumber Int
+  messageId  Int
+  size       BigInt
+  etag       String
+
+  @@unique([uploadId, partNumber])
+  @@index([uploadId])
+}

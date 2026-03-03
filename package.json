@@ -1,0 +1,32 @@
+{
+  "name": "telegram-s3",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "db:migrate": "pnpm --filter @tgs3/api exec prisma migrate dev",
+    "db:push": "pnpm --filter @tgs3/api exec prisma db push",
+    "db:generate": "pnpm --filter @tgs3/api exec prisma generate"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@10.7.1",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "@nestjs/core",
+      "sharp",
+      "bufferutil",
+      "utf-8-validate",
+      "es5-ext"
+    ]
+  }
+}
