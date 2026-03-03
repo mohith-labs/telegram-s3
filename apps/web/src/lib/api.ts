@@ -6,11 +6,12 @@ const API_BASE = "/api";
  */
 function getDirectApiUrl(path: string): string {
   if (typeof window !== "undefined") {
-    const base =
-      process.env.NEXT_PUBLIC_ADMIN_API_URL ||
-      `${window.location.protocol}//${window.location.hostname}:3001/api`;
-    return `${base}${path}`;
+    const config = (window as any).__TGS3_CONFIG__;
+    if (config?.adminApiUrl) {
+      return `${config.adminApiUrl}${path}`;
+    }
   }
+  // Fallback: use same-origin proxy (works for all sizes via Next.js rewrite)
   return `/api${path}`;
 }
 

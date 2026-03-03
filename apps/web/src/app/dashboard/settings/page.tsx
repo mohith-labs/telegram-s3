@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,6 +12,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
+  const [s3Endpoint, setS3Endpoint] = useState("http://localhost:4000");
+
+  useEffect(() => {
+    const config = (window as any).__TGS3_CONFIG__;
+    if (config?.s3ApiUrl) {
+      setS3Endpoint(config.s3ApiUrl);
+    }
+  }, []);
+
   return (
     <div className="space-y-8">
       <div>
@@ -32,7 +42,7 @@ export default function SettingsPage() {
             <Label>S3 API Endpoint</Label>
             <Input
               readOnly
-              value={`http://localhost:4000`}
+              value={s3Endpoint}
               className="font-mono"
             />
           </div>
@@ -48,9 +58,9 @@ aws configure set aws_secret_access_key <your-secret-key>
 aws configure set default.region us-east-1
 
 # Example commands:
-aws s3 ls --endpoint-url http://localhost:4000
-aws s3 mb s3://my-bucket --endpoint-url http://localhost:4000
-aws s3 cp file.txt s3://my-bucket/ --endpoint-url http://localhost:4000`}
+aws s3 ls --endpoint-url ${s3Endpoint}
+aws s3 mb s3://my-bucket --endpoint-url ${s3Endpoint}
+aws s3 cp file.txt s3://my-bucket/ --endpoint-url ${s3Endpoint}`}
             </pre>
           </div>
         </CardContent>

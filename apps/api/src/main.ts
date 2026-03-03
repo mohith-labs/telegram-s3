@@ -37,14 +37,17 @@ function decodeAwsChunked(buffer: Buffer): Buffer {
 async function bootstrap() {
   // Admin API server
   const adminApp = await NestFactory.create(AppModule);
+  const configService = adminApp.get(ConfigService);
   adminApp.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  const frontendUrl = configService.get<string>('FRONTEND_URL');
   adminApp.enableCors({
-    origin: true,
+    origin: frontendUrl || true,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Disposition', 'Content-Length', 'ETag'],
   });
   adminApp.setGlobalPrefix('api');
-
-  const configService = adminApp.get(ConfigService);
   const adminPort = configService.get<number>('ADMIN_API_PORT', 3001);
   await adminApp.listen(adminPort);
   console.log(`Admin API running on http://localhost:${adminPort}`);

@@ -13,6 +13,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - FRONTEND_URL=${FRONTEND_URL}
       - ADMIN_API_URL=${ADMIN_API_URL}
+      - S3_API_URL=${S3_API_URL}
       - ADMIN_API_PORT=${ADMIN_API_PORT}
       - S3_API_PORT=${S3_API_PORT}
     restart: unless-stopped
