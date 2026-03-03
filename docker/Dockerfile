@@ -31,7 +31,12 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 tgs3 && \
     adduser --system --uid 1001 tgs3
 
-# Copy built API
+# Copy built Web (Next.js standalone) - MUST come first since it writes its own node_modules
+COPY --from=builder --chown=tgs3:tgs3 /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=tgs3:tgs3 /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=tgs3:tgs3 /app/apps/web/public ./apps/web/public
+
+# Copy built API (after standalone so we don't get overwritten)
 COPY --from=builder --chown=tgs3:tgs3 /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=tgs3:tgs3 /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder --chown=tgs3:tgs3 /app/apps/api/node_modules ./apps/api/node_modules
@@ -40,11 +45,6 @@ COPY --from=builder --chown=tgs3:tgs3 /app/node_modules ./node_modules
 # Copy shared package (workspace symlink target)
 COPY --from=builder --chown=tgs3:tgs3 /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=tgs3:tgs3 /app/packages/shared/package.json ./packages/shared/package.json
-
-# Copy built Web (Next.js standalone)
-COPY --from=builder --chown=tgs3:tgs3 /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=tgs3:tgs3 /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder --chown=tgs3:tgs3 /app/apps/web/public ./apps/web/public
 
 # Copy start script
 COPY --chown=tgs3:tgs3 docker/start.sh ./start.sh
