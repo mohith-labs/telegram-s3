@@ -302,11 +302,8 @@ export default function BucketDetailPage() {
                               className="h-8 w-8"
                               onClick={() => {
                                 const token = localStorage.getItem("tgs3_token");
-                                const config = (window as any).__TGS3_CONFIG__;
-                                const apiBase = config?.adminApiUrl || "/api";
                                 const url =
-                                  apiBase +
-                                  `/objects/${bucketName}/download/${encodeURIComponent(obj.key)}`;
+                                  `/api/objects/${bucketName}/download/${encodeURIComponent(obj.key)}`;
                                 const a = document.createElement("a");
                                 a.href = url + `?token=${token}`;
                                 a.download = obj.key.split("/").pop() || obj.key;

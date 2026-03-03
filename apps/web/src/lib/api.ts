@@ -1,20 +1,5 @@
 const API_BASE = "/api";
 
-/**
- * Direct admin API URL — bypasses Next.js rewrite proxy for large uploads.
- * The proxy has a ~10MB body size limit that cannot be configured.
- */
-function getDirectApiUrl(path: string): string {
-  if (typeof window !== "undefined") {
-    const config = (window as any).__TGS3_CONFIG__;
-    if (config?.adminApiUrl) {
-      return `${config.adminApiUrl}${path}`;
-    }
-  }
-  // Fallback: use same-origin proxy (works for all sizes via Next.js rewrite)
-  return `/api${path}`;
-}
-
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -179,9 +164,7 @@ export const api = {
           typeof window !== "undefined"
             ? localStorage.getItem("tgs3_token")
             : null;
-        const url = getDirectApiUrl(
-          `/objects/${bucket}/upload?key=${encodeURIComponent(key)}`,
-        );
+        const url = `${API_BASE}/objects/${bucket}/upload?key=${encodeURIComponent(key)}`;
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", url);
@@ -214,9 +197,7 @@ export const api = {
 
     // Phase 2: Poll server→Telegram progress (50-100%)
     if (onProgress) onProgress(50);
-    const progressUrl = getDirectApiUrl(
-      `/objects/upload-progress/${uploadId}`,
-    );
+    const progressUrl = `${API_BASE}/objects/upload-progress/${uploadId}`;
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("tgs3_token")
