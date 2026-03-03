@@ -55,20 +55,18 @@ export default function BucketDetailPage() {
       setUploading(true);
       setUploadProgress(files.map((f) => ({ name: f.name, progress: 0 })));
 
+      let successCount = 0;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const key = prefix + file.name;
 
         try {
-          setUploadProgress((prev) =>
-            prev.map((p, idx) => (idx === i ? { ...p, progress: 50 } : p)),
-          );
-
-          await api.uploadObject(bucketName, key, file);
-
-          setUploadProgress((prev) =>
-            prev.map((p, idx) => (idx === i ? { ...p, progress: 100 } : p)),
-          );
+          await api.uploadObject(bucketName, key, file, (percent) => {
+            setUploadProgress((prev) =>
+              prev.map((p, idx) => (idx === i ? { ...p, progress: percent } : p)),
+            );
+          });
+          successCount++;
         } catch (error: any) {
           toast.error(`Failed to upload ${file.name}: ${error.message}`);
         }
@@ -77,9 +75,11 @@ export default function BucketDetailPage() {
       setUploading(false);
       setUploadProgress([]);
       loadObjects();
-      toast.success(
-        `${files.length} file${files.length > 1 ? "s" : ""} uploaded`,
-      );
+      if (successCount > 0) {
+        toast.success(
+          `${successCount} file${successCount > 1 ? "s" : ""} uploaded`,
+        );
+      }
     },
     [bucketName, prefix],
   );
@@ -174,6 +174,7 @@ export default function BucketDetailPage() {
               type="file"
               className="hidden"
               multiple
+              accept="*/*"
               onChange={(e) => {
                 if (e.target.files) onDrop(Array.from(e.target.files));
               }}

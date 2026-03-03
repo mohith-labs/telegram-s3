@@ -80,7 +80,7 @@ export class BucketsService {
     };
   }
 
-  async delete(name: string) {
+  async delete(name: string, force = false) {
     const bucket = await this.prisma.bucket.findUnique({
       where: { name },
       include: { _count: { select: { objects: true } } },
@@ -90,8 +90,34 @@ export class BucketsService {
       throw new NotFoundException('Bucket not found');
     }
 
-    if (bucket._count.objects > 0) {
+    if (bucket._count.objects > 0 && !force) {
       throw new ConflictException('Bucket is not empty');
+    }
+
+    // Force delete: remove all objects and their Telegram messages
+    if (force && bucket._count.objects > 0) {
+      const objects = await this.prisma.s3Object.findMany({
+        where: { bucketId: bucket.id },
+        include: { chunks: true },
+      });
+
+      for (const obj of objects) {
+        if (obj.chunks.length > 0) {
+          try {
+            await this.telegram.deleteMessages(
+              bucket.channelId,
+              bucket.channelAccessHash,
+              obj.chunks.map((c) => c.messageId),
+            );
+          } catch {
+            // Message might already be deleted
+          }
+        }
+      }
+      // Delete all objects from DB
+      await this.prisma.s3Object.deleteMany({
+        where: { bucketId: bucket.id },
+      });
     }
 
     // Delete Telegram channel

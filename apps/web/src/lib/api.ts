@@ -146,8 +146,8 @@ export const api = {
       body: JSON.stringify({ name }),
     }),
 
-  deleteBucket: (name: string) =>
-    request<{ deleted: boolean }>(`/buckets/${name}`, { method: "DELETE" }),
+  deleteBucket: (name: string, force = false) =>
+    request<{ deleted: boolean }>(`/buckets/${name}${force ? "?force=true" : ""}`, { method: "DELETE" }),
 
   // Objects
   getStats: () =>
@@ -162,21 +162,85 @@ export const api = {
   ) =>
     request<any>(`/objects/${bucket}?prefix=${encodeURIComponent(prefix)}&delimiter=${encodeURIComponent(delimiter)}`),
 
-  uploadObject: (bucket: string, key: string, file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+  uploadObject: async (
+    bucket: string,
+    key: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): Promise<{ etag: string; size: number }> => {
+    // Phase 1: Send file to server (0-49%)
+    const { uploadId } = await new Promise<{ uploadId: string }>(
+      (resolve, reject) => {
+        const formData = new FormData();
+        formData.append("file", file);
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("tgs3_token") : null;
-    // Upload directly to admin API to bypass Next.js proxy body size limit
-    const url = getDirectApiUrl(`/objects/${bucket}/upload?key=${encodeURIComponent(key)}`);
-    return fetch(url, {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    }).then((res) => {
-      if (!res.ok) throw new ApiError(res.status, "Upload failed");
-      return res.json();
-    });
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("tgs3_token")
+            : null;
+        const url = getDirectApiUrl(
+          `/objects/${bucket}/upload?key=${encodeURIComponent(key)}`,
+        );
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url);
+        if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && onProgress) {
+            // Phase 1: 0-49%
+            onProgress(Math.round((e.loaded / e.total) * 49));
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            let message = "Upload failed";
+            try {
+              const json = JSON.parse(xhr.responseText);
+              message = json.message || message;
+            } catch {}
+            reject(new ApiError(xhr.status, message));
+          }
+        };
+
+        xhr.onerror = () => reject(new ApiError(0, "Network error"));
+        xhr.send(formData);
+      },
+    );
+
+    // Phase 2: Poll server→Telegram progress (50-100%)
+    if (onProgress) onProgress(50);
+    const progressUrl = getDirectApiUrl(
+      `/objects/upload-progress/${uploadId}`,
+    );
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("tgs3_token")
+        : null;
+    const headers: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+
+    while (true) {
+      await new Promise((r) => setTimeout(r, 500));
+      const res = await fetch(progressUrl, { headers });
+      const data = await res.json();
+
+      if (data.phase === "done") {
+        if (onProgress) onProgress(100);
+        return data.result;
+      }
+      if (data.phase === "error") {
+        throw new ApiError(500, data.error || "Upload failed");
+      }
+      if (data.phase === "uploading" && onProgress) {
+        // Map server progress (0-100) to display range (50-99)
+        onProgress(50 + Math.round(data.percent * 0.5));
+      }
+    }
   },
 
   deleteObject: (bucket: string, key: string) =>

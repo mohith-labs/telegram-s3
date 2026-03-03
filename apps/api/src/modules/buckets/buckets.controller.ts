@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { BucketsService } from './buckets.service';
@@ -27,7 +28,10 @@ export class BucketsController {
   }
 
   @Delete(':name')
-  async delete(@Param('name') name: string) {
-    return this.bucketsService.delete(name);
+  async delete(
+    @Param('name') name: string,
+    @Query('force') force?: string,
+  ) {
+    return this.bucketsService.delete(name, force === 'true');
   }
 }

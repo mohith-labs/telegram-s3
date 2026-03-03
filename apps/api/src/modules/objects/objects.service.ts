@@ -80,6 +80,7 @@ export class ObjectsService {
     body: Buffer,
     contentType: string,
     metadata: Record<string, string> = {},
+    onProgress?: (percent: number) => void,
   ) {
     const bucket = await this.prisma.bucket.findUnique({
       where: { name: bucketName },
@@ -118,6 +119,7 @@ export class ObjectsService {
       body,
       filename,
       contentType,
+      onProgress,
     );
 
     // Create DB records

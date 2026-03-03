@@ -5,6 +5,9 @@ import { StringSession } from 'telegram/sessions';
 import { CustomFile } from 'telegram/client/uploads';
 import { computeCheck } from 'telegram/Password';
 import bigInt from 'big-integer';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { UPLOAD_WORKERS, channelTitle } from '@tgs3/shared';
 
 @Injectable()
@@ -240,6 +243,10 @@ export class TelegramService implements OnModuleInit {
     });
   }
 
+  // GramJS streams from file path for files > 20MB instead of buffering in memory.
+  // We write to a temp file for large uploads so GramJS can stream it.
+  private static readonly GRAMJS_BUFFER_THRESHOLD = 20 * 1024 * 1024;
+
   // File operations
   async uploadFile(
     channelId: bigint,
@@ -247,22 +254,46 @@ export class TelegramService implements OnModuleInit {
     buffer: Buffer,
     filename: string,
     mimeType: string,
+    onProgress?: (percent: number) => void,
   ): Promise<{ messageId: number }> {
     const client = this.getClient();
     const peer = await this.resolveChannel(channelId, accessHash);
 
-    const file = new CustomFile(filename, buffer.length, '', buffer);
-    const result = await client.sendFile(peer, {
-      file,
-      caption: '',
-      workers: UPLOAD_WORKERS,
-      attributes: [
-        new Api.DocumentAttributeFilename({ fileName: filename }),
-      ],
-      forceDocument: true,
-    });
+    let tempFilePath: string | null = null;
+    let file: CustomFile;
 
-    return { messageId: result.id };
+    if (buffer.length > TelegramService.GRAMJS_BUFFER_THRESHOLD) {
+      // Write to temp file for large uploads
+      tempFilePath = path.join(os.tmpdir(), `tgs3-${Date.now()}-${filename}`);
+      fs.writeFileSync(tempFilePath, buffer);
+      file = new CustomFile(filename, buffer.length, tempFilePath);
+    } else {
+      file = new CustomFile(filename, buffer.length, '', buffer);
+    }
+
+    try {
+      const result = await client.sendFile(peer, {
+        file,
+        caption: '',
+        workers: UPLOAD_WORKERS,
+        attributes: [
+          new Api.DocumentAttributeFilename({ fileName: filename }),
+        ],
+        forceDocument: true,
+        progressCallback: onProgress
+          ? (progress: number) => {
+              onProgress(Math.round(progress * 100));
+            }
+          : undefined,
+      });
+      return { messageId: result.id };
+    } finally {
+      if (tempFilePath) {
+        try {
+          fs.unlinkSync(tempFilePath);
+        } catch {}
+      }
+    }
   }
 
   async downloadFile(

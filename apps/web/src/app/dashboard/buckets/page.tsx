@@ -33,6 +33,9 @@ export default function BucketsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [newBucketName, setNewBucketName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; objectCount: number } | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadBuckets();
@@ -65,18 +68,24 @@ export default function BucketsPage() {
     }
   };
 
-  const handleDelete = async (name: string, e: React.MouseEvent) => {
+  const openDeleteDialog = (name: string, objectCount: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (
-      !confirm(`Are you sure you want to delete bucket "${name}"? This will also delete the Telegram channel.`)
-    )
-      return;
+    setDeleteTarget({ name, objectCount });
+    setDeleteConfirmName("");
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await api.deleteBucket(name);
+      await api.deleteBucket(deleteTarget.name, deleteTarget.objectCount > 0);
+      setDeleteTarget(null);
       loadBuckets();
-      toast.success(`Bucket "${name}" deleted`);
+      toast.success(`Bucket "${deleteTarget.name}" deleted`);
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -186,7 +195,7 @@ export default function BucketsPage() {
                     variant="ghost"
                     size="icon"
                     className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive h-8 w-8"
-                    onClick={(e) => handleDelete(bucket.name, e)}
+                    onClick={(e) => openDeleteDialog(bucket.name, bucket.objectCount || 0, e)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -208,6 +217,53 @@ export default function BucketsPage() {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Bucket</DialogTitle>
+            <DialogDescription>
+              {deleteTarget && deleteTarget.objectCount > 0 ? (
+                <>
+                  This bucket contains <strong>{deleteTarget.objectCount} object{deleteTarget.objectCount > 1 ? "s" : ""}</strong>.
+                  All objects and the associated Telegram channel will be permanently deleted.
+                </>
+              ) : (
+                "This will delete the bucket and its associated Telegram channel."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="confirmName">
+              Type <strong>{deleteTarget?.name}</strong> to confirm
+            </Label>
+            <Input
+              id="confirmName"
+              placeholder="Bucket name"
+              value={deleteConfirmName}
+              onChange={(e) => setDeleteConfirmName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteConfirmName !== deleteTarget?.name || deleting}
+              onClick={handleDelete}
+            >
+              {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete Bucket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
