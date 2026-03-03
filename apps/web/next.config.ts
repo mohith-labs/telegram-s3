@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: join(__dirname, '../../'),
   transpilePackages: ['@tgs3/shared'],
+  experimental: {
+    middlewareClientMaxBodySize: '2gb',
+  },
   async rewrites() {
     return [
       {

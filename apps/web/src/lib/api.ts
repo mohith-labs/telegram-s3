@@ -1,5 +1,20 @@
 const API_BASE = "/api";
 
+/**
+ * Returns the admin API base URL for direct calls (bypasses Next.js proxy).
+ * Uses __TGS3_CONFIG__ injected by layout.tsx from ADMIN_API_URL env var.
+ * Falls back to /api proxy when the config points to localhost (env var not set).
+ */
+function getDirectApiUrl(path: string): string {
+  if (typeof window !== "undefined") {
+    const config = (window as any).__TGS3_CONFIG__;
+    if (config?.adminApiUrl && !config.adminApiUrl.includes("localhost")) {
+      return `${config.adminApiUrl}${path}`;
+    }
+  }
+  return `${API_BASE}${path}`;
+}
+
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -164,7 +179,9 @@ export const api = {
           typeof window !== "undefined"
             ? localStorage.getItem("tgs3_token")
             : null;
-        const url = `${API_BASE}/objects/${bucket}/upload?key=${encodeURIComponent(key)}`;
+        const url = getDirectApiUrl(
+          `/objects/${bucket}/upload?key=${encodeURIComponent(key)}`,
+        );
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", url);
@@ -197,7 +214,7 @@ export const api = {
 
     // Phase 2: Poll server→Telegram progress (50-100%)
     if (onProgress) onProgress(50);
-    const progressUrl = `${API_BASE}/objects/upload-progress/${uploadId}`;
+    const progressUrl = getDirectApiUrl(`/objects/upload-progress/${uploadId}`);
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("tgs3_token")
