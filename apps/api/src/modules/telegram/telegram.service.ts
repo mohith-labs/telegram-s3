@@ -22,7 +22,7 @@ export class TelegramService implements OnModuleInit {
     await this.restoreSession();
   }
 
-  private async restoreSession() {
+  private async restoreSession(): Promise<boolean> {
     const session = await this.prisma.telegramSession.findFirst();
     if (session && session.sessionString) {
       try {
@@ -39,6 +39,7 @@ export class TelegramService implements OnModuleInit {
             where: { id: session.id },
             data: { connected: true },
           });
+          return true;
         } else {
           this.logger.warn('Saved session is no longer authorized');
           this.client = null;
@@ -48,6 +49,7 @@ export class TelegramService implements OnModuleInit {
         this.client = null;
       }
     }
+    return false;
   }
 
   async getStatus() {
@@ -165,9 +167,15 @@ export class TelegramService implements OnModuleInit {
     return { success: true };
   }
 
-  getClient(): TelegramClient {
-    if (!this.client) {
-      throw new Error('Telegram client not connected');
+  async getClient(): Promise<TelegramClient> {
+    // If client is null or disconnected, attempt to reconnect
+    if (!this.client || !this.client.connected) {
+      this.logger.warn('Telegram client not connected, attempting to reconnect...');
+      this.client = null;
+      const restored = await this.restoreSession();
+      if (!restored || !this.client) {
+        throw new Error('Telegram client not connected');
+      }
     }
     return this.client;
   }
@@ -180,7 +188,7 @@ export class TelegramService implements OnModuleInit {
   async createChannel(
     bucketName: string,
   ): Promise<{ channelId: bigint; accessHash: bigint }> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const result = await client.invoke(
       new Api.channels.CreateChannel({
         title: channelTitle(bucketName),
@@ -199,7 +207,7 @@ export class TelegramService implements OnModuleInit {
   }
 
   async deleteChannel(channelId: bigint, accessHash: bigint): Promise<void> {
-    const client = this.getClient();
+    const client = await this.getClient();
     await client.invoke(
       new Api.channels.DeleteChannel({
         channel: new Api.InputChannel({
@@ -219,7 +227,7 @@ export class TelegramService implements OnModuleInit {
     channelId: bigint,
     accessHash: bigint,
   ): Promise<Api.InputPeerChannel> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const chId = bigInt(channelId.toString());
     const accHash = bigInt(accessHash.toString());
 
@@ -256,7 +264,7 @@ export class TelegramService implements OnModuleInit {
     mimeType: string,
     onProgress?: (percent: number) => void,
   ): Promise<{ messageId: number }> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const peer = await this.resolveChannel(channelId, accessHash);
 
     let tempFilePath: string | null = null;
@@ -301,7 +309,7 @@ export class TelegramService implements OnModuleInit {
     accessHash: bigint,
     messageId: number,
   ): Promise<Buffer> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const peer = await this.resolveChannel(channelId, accessHash);
 
     const messages = await client.getMessages(peer, {
@@ -326,7 +334,7 @@ export class TelegramService implements OnModuleInit {
     accessHash: bigint,
     messageId: number,
   ): AsyncGenerator<Buffer> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const peer = await this.resolveChannel(channelId, accessHash);
 
     const messages = await client.getMessages(peer, {
@@ -352,7 +360,7 @@ export class TelegramService implements OnModuleInit {
     accessHash: bigint,
     messageIds: number[],
   ): Promise<void> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const inputChannel = new Api.InputChannel({
       channelId: bigInt(channelId.toString()),
       accessHash: bigInt(accessHash.toString()),
