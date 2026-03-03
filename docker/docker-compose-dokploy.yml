@@ -5,6 +5,7 @@ services:
       dockerfile: docker/Dockerfile
     volumes:
       - tgs3-data:/data
+    pull_policy: always
     environment:
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
