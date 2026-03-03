@@ -177,6 +177,39 @@ export class ObjectsService {
     };
   }
 
+  async getObjectStream(bucketName: string, key: string) {
+    const bucket = await this.prisma.bucket.findUnique({
+      where: { name: bucketName },
+    });
+    if (!bucket) throw new NotFoundException('Bucket not found');
+
+    const obj = await this.prisma.s3Object.findUnique({
+      where: { bucketId_key: { bucketId: bucket.id, key } },
+      include: { chunks: { orderBy: { chunkIndex: 'asc' } } },
+    });
+    if (!obj) throw new NotFoundException('Object not found');
+
+    const telegram = this.telegram;
+    async function* stream() {
+      for (const chunk of obj!.chunks) {
+        yield* telegram.streamDownloadFile(
+          bucket!.channelId,
+          bucket!.channelAccessHash,
+          chunk.messageId,
+        );
+      }
+    }
+
+    return {
+      stream: stream(),
+      contentType: obj.contentType,
+      etag: obj.etag,
+      size: Number(obj.size),
+      lastModified: obj.updatedAt,
+      metadata: JSON.parse(obj.metadata),
+    };
+  }
+
   async headObject(bucketName: string, key: string) {
     const bucket = await this.prisma.bucket.findUnique({
       where: { name: bucketName },

@@ -86,8 +86,9 @@ export class S3Controller {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    // Extract the full key from the URL path after /:bucket/
-    const key = (req.params as any).key || (req.params as any)[0] || '';
+    // NestJS 11 wildcard *key returns an array of path segments; join them back
+    const rawKey = (req.params as any).key;
+    const key = Array.isArray(rawKey) ? rawKey.join('/') : (rawKey || '');
 
     // Check for multipart operations
     if (req.method === 'POST' && 'uploads' in req.query) {
@@ -169,7 +170,9 @@ export class S3Controller {
     req: Request,
     res: Response,
   ) {
-    const result = await this.objectService.getObject(bucket, key);
+    // Use streaming to avoid buffering the entire file in memory.
+    // Data flows from Telegram → response as it arrives.
+    const result = await this.objectService.getObjectStream(bucket, key);
 
     res
       .status(200)
@@ -180,12 +183,16 @@ export class S3Controller {
       .header('Accept-Ranges', 'bytes')
       .header('x-amz-request-id', uuid());
 
-    // Set metadata headers
-    for (const [key, value] of Object.entries(result.metadata)) {
-      res.header(`x-amz-meta-${key}`, value as string);
+    if (result.metadata) {
+      for (const [k, v] of Object.entries(result.metadata)) {
+        res.header(`x-amz-meta-${k}`, v as string);
+      }
     }
 
-    res.send(result.body);
+    for await (const chunk of result.stream) {
+      res.write(chunk);
+    }
+    res.end();
   }
 
   private async handleHeadObject(

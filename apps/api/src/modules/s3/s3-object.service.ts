@@ -44,6 +44,20 @@ export class S3ObjectService {
     }
   }
 
+  async getObjectStream(bucket: string, key: string) {
+    try {
+      return await this.objectsService.getObjectStream(bucket, key);
+    } catch (error: any) {
+      if (error.message === 'Object not found') {
+        throw new S3Exception('NoSuchKey', `/${bucket}/${key}`);
+      }
+      if (error.message === 'Bucket not found') {
+        throw new S3Exception('NoSuchBucket', `/${bucket}`);
+      }
+      throw error;
+    }
+  }
+
   async headObject(bucket: string, key: string) {
     try {
       return await this.objectsService.headObject(bucket, key);

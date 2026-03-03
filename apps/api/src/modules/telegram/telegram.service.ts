@@ -321,6 +321,32 @@ export class TelegramService implements OnModuleInit {
     return buffer instanceof Buffer ? buffer : Buffer.from(buffer);
   }
 
+  async *streamDownloadFile(
+    channelId: bigint,
+    accessHash: bigint,
+    messageId: number,
+  ): AsyncGenerator<Buffer> {
+    const client = this.getClient();
+    const peer = await this.resolveChannel(channelId, accessHash);
+
+    const messages = await client.getMessages(peer, {
+      ids: [messageId],
+    });
+
+    if (!messages[0] || !messages[0].media) {
+      throw new Error('Message or media not found');
+    }
+
+    const iter = client.iterDownload({
+      file: messages[0].media,
+      requestSize: 512 * 1024,
+    });
+
+    for await (const chunk of iter) {
+      yield Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as any);
+    }
+  }
+
   async deleteMessages(
     channelId: bigint,
     accessHash: bigint,

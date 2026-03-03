@@ -86,9 +86,13 @@ export class S3AuthGuard implements CanActivate {
       )
       .join('&');
 
+    // Use the raw URL path (not decoded by Express) for SigV4 canonical URI.
+    // AWS clients sign the URI-encoded path, e.g. /bucket/my%20file.txt
+    const rawPath = request.originalUrl.split('?')[0];
+
     const isValid = verifySignature({
       method: request.method,
-      path: request.path,
+      path: rawPath,
       queryString: sortedQuery,
       headers: headersMap,
       signedHeaders,

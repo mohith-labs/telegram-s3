@@ -101,24 +101,32 @@ export class ObjectsController {
   @Get(':bucket/download/*key')
   async downloadObject(
     @Param('bucket') bucket: string,
-    @Param('key') key: string,
+    @Param('key') rawKey: string | string[],
     @Res() res: Response,
   ) {
-    const obj = await this.objectsService.getObject(bucket, key);
+    const key = Array.isArray(rawKey) ? rawKey.join('/') : rawKey;
+    const { stream, contentType, size } =
+      await this.objectsService.getObjectStream(bucket, key);
     const filename = key.split('/').pop() || key;
+
     res.set({
-      'Content-Type': obj.contentType,
-      'Content-Length': obj.size,
+      'Content-Type': contentType,
+      'Content-Length': String(size),
       'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
     });
-    res.send(obj.body);
+
+    for await (const chunk of stream) {
+      res.write(chunk);
+    }
+    res.end();
   }
 
   @Delete(':bucket/*key')
   async deleteObject(
     @Param('bucket') bucket: string,
-    @Param('key') key: string,
+    @Param('key') rawKey: string | string[],
   ) {
+    const key = Array.isArray(rawKey) ? rawKey.join('/') : rawKey;
     await this.objectsService.deleteObject(bucket, key);
     return { deleted: true };
   }
