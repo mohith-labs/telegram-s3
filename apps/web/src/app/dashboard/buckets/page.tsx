@@ -173,13 +173,13 @@ export default function BucketsPage() {
           {buckets.map((bucket) => (
             <Card
               key={bucket.id}
-              className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group"
+              className="cursor-pointer hover:border-primary/30 transition-all group"
               onClick={() => router.push(`/dashboard/buckets/${bucket.name}`)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                       <Database className="h-5 w-5 text-primary" />
                     </div>
                     <div>

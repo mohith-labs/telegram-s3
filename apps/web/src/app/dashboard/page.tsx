@@ -32,28 +32,32 @@ export default function DashboardPage() {
         ? "Account linked"
         : "Setup required",
       icon: Send,
-      color: telegramStatus.connected ? "text-green-500" : "text-red-500",
+      iconBg: telegramStatus.connected ? "bg-green-500/10" : "bg-red-500/10",
+      iconColor: telegramStatus.connected ? "text-green-500" : "text-red-500",
     },
     {
       title: "Buckets",
       value: stats.totalBuckets.toString(),
       description: "Total storage buckets",
       icon: Database,
-      color: "text-primary",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
     },
     {
       title: "Objects",
       value: stats.totalObjects.toString(),
       description: "Total stored objects",
       icon: FileText,
-      color: "text-primary",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
     },
     {
       title: "Storage Used",
       value: formatBytes(stats.totalSize),
       description: "Total storage consumption",
       icon: HardDrive,
-      color: "text-primary",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
     },
   ];
 
@@ -68,12 +72,14 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => (
-          <Card key={card.title} className="hover:shadow-md transition-shadow">
+          <Card key={card.title} className="transition-colors hover:border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {card.title}
               </CardTitle>
-              <card.icon className={`h-5 w-5 ${card.color}`} />
+              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${card.iconBg}`}>
+                <card.icon className={`h-4 w-4 ${card.iconColor}`} />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>

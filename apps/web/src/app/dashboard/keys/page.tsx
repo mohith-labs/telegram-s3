@@ -188,7 +188,7 @@ export default function KeysPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                  <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
                     This is the only time the secret key will be shown. Store
                     it securely.
                   </div>
@@ -245,7 +245,7 @@ export default function KeysPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-muted/50">
+                <tr className="border-b border-border/50 bg-muted/30">
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                     Name
                   </th>
@@ -281,7 +281,7 @@ export default function KeysPage() {
                   keys.map((key) => (
                     <tr
                       key={key.id}
-                      className="border-b last:border-0 hover:bg-muted/30"
+                      className="border-b border-border/30 last:border-0 hover:bg-muted/30"
                     >
                       <td className="px-4 py-3 font-medium">{key.name}</td>
                       <td className="px-4 py-3 font-mono text-sm">

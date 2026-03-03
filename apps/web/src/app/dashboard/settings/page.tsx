@@ -50,7 +50,7 @@ export default function SettingsPage() {
             <Label>Region</Label>
             <Input readOnly value="us-east-1" className="font-mono" />
           </div>
-          <div className="rounded-lg bg-muted p-4">
+          <div className="rounded-xl bg-muted p-4">
             <p className="text-sm font-medium mb-2">AWS CLI Configuration</p>
             <pre className="text-xs font-mono text-muted-foreground overflow-x-auto">
               {`aws configure set aws_access_key_id <your-access-key>

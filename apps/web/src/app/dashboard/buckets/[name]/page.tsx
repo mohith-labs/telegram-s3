@@ -157,10 +157,10 @@ export default function BucketDetailPage() {
 
       {/* Upload Zone */}
       <div
-        className={`relative rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+        className={`relative rounded-2xl border-2 border-dashed p-6 text-center transition-colors ${
           isDragActive
             ? "border-primary bg-primary/5"
-            : "border-muted hover:border-muted-foreground/30"
+            : "border-border hover:border-muted-foreground/30"
         }`}
       >
         <UploadCloud
@@ -214,7 +214,7 @@ export default function BucketDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-muted/50">
+                <tr className="border-b border-border/50 bg-muted/30">
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                     Name
                   </th>
@@ -248,7 +248,7 @@ export default function BucketDetailPage() {
                     {data?.folders?.map((folder: any) => (
                       <tr
                         key={folder.prefix}
-                        className="border-b last:border-0 hover:bg-muted/30 cursor-pointer"
+                        className="border-b border-border/30 last:border-0 hover:bg-muted/30 cursor-pointer"
                         onClick={() => navigateToPrefix(folder.prefix)}
                       >
                         <td className="px-4 py-3">
@@ -275,7 +275,7 @@ export default function BucketDetailPage() {
                     {data?.contents?.map((obj: any) => (
                       <tr
                         key={obj.key}
-                        className="border-b last:border-0 hover:bg-muted/30"
+                        className="border-b border-border/30 last:border-0 hover:bg-muted/30"
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">

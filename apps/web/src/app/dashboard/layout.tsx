@@ -71,15 +71,15 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          "sticky top-0 flex h-screen flex-col border-r bg-sidebar-background transition-all duration-300",
+          "sticky top-0 flex h-screen flex-col border-r border-border/50 bg-sidebar-background transition-all duration-300",
           collapsed ? "w-16" : "w-64",
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center border-b px-4">
-          <Cloud className="h-6 w-6 shrink-0 text-sidebar-primary" />
+        <div className="flex h-16 items-center border-b border-border/50 px-4">
+          <Cloud className="h-6 w-6 shrink-0 text-primary" />
           {!collapsed && (
-            <span className="ml-3 text-lg font-bold text-sidebar-foreground">
+            <span className="ml-3 text-lg font-bold text-foreground">
               TGS3
             </span>
           )}
@@ -109,10 +109,10 @@ export default function DashboardLayout({
               <Link key={item.href} href={item.href}>
                 <div
                   className={cn(
-                    "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-sidebar-accent text-sidebar-primary"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+                      ? "bg-primary text-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   )}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
@@ -124,11 +124,11 @@ export default function DashboardLayout({
         </nav>
 
         {/* Footer */}
-        <div className="border-t p-2 space-y-1">
+        <div className="border-t border-border/50 p-2 space-y-1">
           <ThemeToggle collapsed={collapsed} />
           <button
             onClick={handleLogout}
-            className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
           >
             <LogOut className="h-5 w-5 shrink-0" />
             {!collapsed && <span className="ml-3">Logout</span>}

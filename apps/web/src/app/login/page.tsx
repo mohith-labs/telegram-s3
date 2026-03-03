@@ -38,11 +38,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
-      <Card className="w-full max-w-md shadow-2xl border-primary/10">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-            <Cloud className="h-8 w-8 text-primary" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary">
+            <Cloud className="h-8 w-8 text-primary-foreground" />
           </div>
           <div>
             <CardTitle className="text-3xl font-bold tracking-tight">
