@@ -39,6 +39,11 @@ export class AdminAuthGuard implements CanActivate {
     if (auth && auth.startsWith('Bearer ')) {
       return auth.slice(7);
     }
+    // Support token via query parameter (for browser downloads)
+    const queryToken = request.query?.token as string | undefined;
+    if (queryToken) {
+      return queryToken;
+    }
     return undefined;
   }
 }

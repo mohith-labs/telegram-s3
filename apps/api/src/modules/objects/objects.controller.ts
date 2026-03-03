@@ -5,10 +5,12 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ObjectsService } from './objects.service';
 import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
@@ -94,6 +96,22 @@ export class ObjectsController {
       });
 
     return { uploadId };
+  }
+
+  @Get(':bucket/download/*key')
+  async downloadObject(
+    @Param('bucket') bucket: string,
+    @Param('key') key: string,
+    @Res() res: Response,
+  ) {
+    const obj = await this.objectsService.getObject(bucket, key);
+    const filename = key.split('/').pop() || key;
+    res.set({
+      'Content-Type': obj.contentType,
+      'Content-Length': obj.size,
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+    });
+    res.send(obj.body);
   }
 
   @Delete(':bucket/*key')

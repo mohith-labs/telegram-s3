@@ -299,6 +299,24 @@ export default function BucketDetailPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                const token = localStorage.getItem("tgs3_token");
+                                const url =
+                                  (process.env.NEXT_PUBLIC_ADMIN_API_URL ||
+                                    `${window.location.protocol}//${window.location.hostname}:3001/api`) +
+                                  `/objects/${bucketName}/download/${encodeURIComponent(obj.key)}`;
+                                const a = document.createElement("a");
+                                a.href = url + `?token=${token}`;
+                                a.download = obj.key.split("/").pop() || obj.key;
+                                a.click();
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive"
                               onClick={() => handleDelete(obj.key)}
                             >
