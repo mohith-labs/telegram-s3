@@ -1,0 +1,20 @@
+services:
+  tgs3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - tgs3-data:/data
+    environment:
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - ADMIN_API_URL=${ADMIN_API_URL}
+      - ADMIN_API_PORT=${ADMIN_API_PORT}
+      - S3_API_PORT=${S3_API_PORT}
+    restart: unless-stopped
+
+volumes:
+  tgs3-data:
